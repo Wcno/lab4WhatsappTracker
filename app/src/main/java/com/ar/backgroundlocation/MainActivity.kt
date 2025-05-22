@@ -25,7 +25,7 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background
                 ) {
-                    App()
+                    WhatsAppLocationScreen()
                 }
             }
         }
@@ -94,9 +94,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
-
-
-
-
