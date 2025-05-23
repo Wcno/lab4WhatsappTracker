@@ -2,7 +2,6 @@ package com.ar.backgroundlocation
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
@@ -16,10 +15,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import java.net.URLEncoder
+import androidx.core.net.toUri
 
 
 @Composable
@@ -35,79 +34,84 @@ fun WhatsAppLocationScreen() {
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = "Enviar ubicación por WhatsApp",
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF075E54)
         )
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         TextField(
             value = phoneNumber,
             onValueChange = { phoneNumber = it },
-            placeholder = { Text("Ingrese el # de contacto") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+            placeholder = { Text("Número de contacto") },
+            modifier = Modifier.fillMaxWidth(),
             textStyle = TextStyle(fontSize = 16.sp),
             singleLine = true
         )
-
-        Spacer(modifier = Modifier.height(8.dp))
 
         TextField(
             value = message,
             onValueChange = { message = it },
-            placeholder = { Text("Ingrese su mensaje") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+            placeholder = { Text("Mensaje personalizado") },
+            modifier = Modifier.fillMaxWidth(),
             textStyle = TextStyle(fontSize = 16.sp),
-            singleLine = true
+            singleLine = false,
+            maxLines = 3
         )
 
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Button(
-            onClick = {
-                Toast.makeText(context, "Información recopilada", Toast.LENGTH_SHORT).show()
-
-                // Iniciar el servicio
-                Intent(context, LocationService::class.java).apply {
-                    action = LocationService.ACTION_SERVICE_START
-                    context.startService(this)
-                }
-
-                // Leer SharedPreferences
-                val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
-                latitude = prefs.getString("last_lat", null)
-                longitude = prefs.getString("last_lng", null)
-            },
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Start Service")
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Servicio iniciado", Toast.LENGTH_SHORT).show()
+                    Intent(context, LocationService::class.java).apply {
+                        action = LocationService.ACTION_SERVICE_START
+                        context.startService(this)
+                    }
+
+                    val prefs = context.getSharedPreferences("location_prefs", Context.MODE_PRIVATE)
+                    latitude = prefs.getString("last_lat", null)
+                    longitude = prefs.getString("last_lng", null)
+                },
+                modifier = Modifier.weight(1f)
+            ) {
+                Text("Iniciar servicio")
+            }
+
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Servicio detenido", Toast.LENGTH_SHORT).show()
+                    Intent(context, LocationService::class.java).apply {
+                        action = LocationService.ACTION_SERVICE_STOP
+                        context.startService(this)
+                    }
+                },
+                modifier = Modifier.weight(1f),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFB00020),
+                    contentColor = Color.White
+                )
+            ) {
+                Text("Detener servicio")
+            }
+        }
+
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("Latitud: ${latitude ?: "no disponible"}")
+            Text("Longitud: ${longitude ?: "no disponible"}")
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text("Latitud: ${latitude ?: "no disponible"}")
-        Text("Longitud: ${longitude ?: "no disponible"}")
-
-        Spacer(modifier = Modifier.height(20.dp))
-        Button(onClick = {
-            Toast.makeText(context, "Service Stop button clicked", Toast.LENGTH_SHORT).show()
-
-            Intent(context, LocationService::class.java).apply {
-                action = LocationService.ACTION_SERVICE_STOP
-                context.startService(this)
-            }
-        }) {
-            Text("Stop Service")
-        }
         Button(
             onClick = {
                 if (phoneNumber.isBlank()) {
@@ -122,27 +126,23 @@ fun WhatsAppLocationScreen() {
                 }
 
                 val fullMessage = message + locationText
-
-                val uri = Uri.parse(
-                    String.format("https://api.whatsapp.com/send?phone=%s&text=%s",
-                        phoneNumber.trim(),
-                        URLEncoder.encode(fullMessage, "UTF-8")
+                val uri = "https://api.whatsapp.com/send?phone=${phoneNumber.trim()}&text=${
+                    URLEncoder.encode(
+                        fullMessage,
+                        "UTF-8"
                     )
-                )
+                }".toUri()
 
-                val intent = Intent(Intent.ACTION_VIEW, uri)
-                context.startActivity(intent)
+                context.startActivity(Intent(Intent.ACTION_VIEW, uri))
             },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp),
+            modifier = Modifier.fillMaxWidth(),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF25D366), // Verde estilo WhatsApp
+                containerColor = Color(0xFF25D366),
                 contentColor = Color.White
             )
         ) {
             Text("Enviar por WhatsApp")
         }
-
     }
 }
+
